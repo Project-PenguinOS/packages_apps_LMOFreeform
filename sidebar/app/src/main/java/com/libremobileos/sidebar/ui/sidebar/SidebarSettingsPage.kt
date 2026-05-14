@@ -154,7 +154,6 @@ fun SidebarAppListItem(
     appInfo: SidebarAppInfo,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    var appChecked = rememberSaveable { mutableStateOf(appInfo.isSidebarApp) }
     SwitchPreference(
         model = object : SwitchPreferenceModel {
             override val title = appInfo.label
@@ -165,9 +164,8 @@ fun SidebarAppListItem(
                     modifier = Modifier.size(SettingsDimension.appIconItemSize)
                 )
             }
-            override val checked = { appChecked.value }
+            override val checked = { appInfo.isSidebarApp }
             override val onCheckedChange: (Boolean) -> Unit = {
-                appChecked.value = it
                 onCheckedChange(it)
             }
         },

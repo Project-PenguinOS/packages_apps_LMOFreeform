@@ -2,14 +2,14 @@ package com.libremobileos.sidebar.room
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-
+import androidx.room.Index
 
 /**
  * @author sunshine
  * @date 2021/1/31
  * 开启小窗数据库实体类
  */
-@Entity
+@Entity(indices = [Index(value = ["packageName", "activityName", "userId"], unique = true)])
 class SidebarAppsEntity(
     //用于排序
     @PrimaryKey(autoGenerate = true)

@@ -16,8 +16,8 @@ class DatabaseRepository(context: Context) {
 
     fun insertSidebarApp(packageName: String, activityName: String, userId: Int) {
         try {
-            sidebarAppsDao.insert(packageName, activityName, userId)
-        }catch (e: Exception) { }
+            sidebarAppsDao.insert(SidebarAppsEntity(0, packageName, activityName, userId))
+        } catch (e: Exception) { }
     }
 
     fun deleteSidebarApp(packageName: String, activityName: String, userId: Int) {

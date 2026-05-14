@@ -31,8 +31,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
 import java.text.Collator
-import java.util.Collections
 
 /**
  * @author KindBrave
@@ -46,6 +47,7 @@ class SidebarSettingsViewModel(private val application: Application) : AndroidVi
         get() = _appList.asStateFlow()
     private val _appList = MutableStateFlow<List<SidebarAppInfo>>(emptyList())
     private val appComparator = AppComparator()
+    private var initJob: Job? = null
 
     val isEnabled = UserHandle.myUserId() == 0
     private val appContext = application.applicationContext
@@ -56,7 +58,24 @@ class SidebarSettingsViewModel(private val application: Application) : AndroidVi
     private val userProfileReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             logger.d("userProfileReceiver received ${intent.action}")
-            allAppList.clear()
+            initAllAppList()
+        }
+    }
+
+    private val launcherAppsCallback = object : LauncherApps.Callback() {
+        override fun onPackageRemoved(packageName: String, user: UserHandle) {
+            initAllAppList()
+        }
+        override fun onPackageAdded(packageName: String, user: UserHandle) {
+            initAllAppList()
+        }
+        override fun onPackageChanged(packageName: String, user: UserHandle) {
+            initAllAppList()
+        }
+        override fun onPackagesAvailable(packageNames: Array<out String>, user: UserHandle, replacing: Boolean) {
+            initAllAppList()
+        }
+        override fun onPackagesUnavailable(packageNames: Array<out String>, user: UserHandle, replacing: Boolean) {
             initAllAppList()
         }
     }
@@ -69,6 +88,7 @@ class SidebarSettingsViewModel(private val application: Application) : AndroidVi
             sp = appContext.getSharedPreferences(SidebarApplication.CONFIG, Context.MODE_PRIVATE)
 
             initAllAppList()
+            launcherApps.registerCallback(launcherAppsCallback)
             appContext.registerReceiverAsUser(
                 userProfileReceiver,
                 UserHandle.CURRENT,
@@ -85,6 +105,7 @@ class SidebarSettingsViewModel(private val application: Application) : AndroidVi
     override fun onCleared() {
         logger.d("onCleared")
         if (!isEnabled) return
+        launcherApps.unregisterCallback(launcherAppsCallback)
         appContext.unregisterReceiver(userProfileReceiver)
     }
 
@@ -121,11 +142,12 @@ class SidebarSettingsViewModel(private val application: Application) : AndroidVi
             .apply()
 
     private fun initAllAppList() {
-        viewModelScope.launch(Dispatchers.IO) {
+        initJob?.cancel()
+        initJob = viewModelScope.launch(Dispatchers.IO) {
+            allAppList.clear()
             userManager.getSidebarFilteredUsers().forEach { userInfo ->
                 logger.d("initAllAppList for user $userInfo")
                 val list = launcherApps.getActivityList(null, userInfo.userHandle)
-                val sidebarAppList = repository.getAllSidebarWithoutLiveData()
 
                 list.forEach { info ->
                     val component = info.componentName
@@ -139,20 +161,20 @@ class SidebarSettingsViewModel(private val application: Application) : AndroidVi
                                 component.packageName,
                                 component.className,
                                 userInfo.userId,
-                                sidebarAppList?.contains(
-                                    info.componentName.packageName,
-                                    info.componentName.className,
-                                    userInfo.userId
-                                ) ?: false
+                                false
                             )
                         )
                     }
                 }
             }
 
-            Collections.sort(allAppList, appComparator)
-            _appList.value = allAppList
-            logger.d("emitted allAppList: $allAppList")
+            repository.getAllSidebarAppsByFlow().collectLatest { pinnedApps ->
+                val updatedList = allAppList.map { app ->
+                    app.copy(isSidebarApp = pinnedApps?.contains(app.packageName, app.activityName, app.userId) ?: false)
+                }
+                _appList.value = updatedList.sortedWith(appComparator)
+                logger.d("emitted updatedList: size=${_appList.value.size}")
+            }
         }
     }
 

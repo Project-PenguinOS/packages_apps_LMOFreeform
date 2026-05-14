@@ -3,6 +3,8 @@ package com.libremobileos.sidebar.room
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
@@ -14,8 +16,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SidebarAppsDao {
 
-    @Query("INSERT INTO SidebarAppsEntity(packageName, activityName, userId) VALUES(:packageName, :activityName, :userId)")
-    fun insert(packageName: String, activityName: String, userId: Int)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(entity: SidebarAppsEntity)
 
     @Query("DELETE FROM SidebarAppsEntity WHERE packageName = :packageName and activityName = :activityName and userId = :userId")
     fun delete(packageName: String, activityName: String, userId: Int)

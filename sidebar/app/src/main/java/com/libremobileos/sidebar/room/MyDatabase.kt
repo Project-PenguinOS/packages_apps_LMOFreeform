@@ -9,7 +9,7 @@ import androidx.room.RoomDatabase
  * @author sunshine
  * @date 2021/1/31
  */
-@Database(entities = [SidebarAppsEntity::class], version = 5, exportSchema = false)
+@Database(entities = [SidebarAppsEntity::class], version = 6, exportSchema = false)
 abstract class MyDatabase : RoomDatabase() {
     abstract val sidebarAppsDao: SidebarAppsDao
 
@@ -21,6 +21,7 @@ abstract class MyDatabase : RoomDatabase() {
             if (database == null) {
                 database = Room.databaseBuilder(context.applicationContext, MyDatabase::class.java, "database.db")
                     .allowMainThreadQueries()
+                    .fallbackToDestructiveMigration()
                     .build()
             }
             return database!!
