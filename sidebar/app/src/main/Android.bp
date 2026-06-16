@@ -31,6 +31,7 @@ android_app {
         "androidx.core_core-ktx",
         "androidx.room_room-ktx",
         "com.google.android.material_material",
+        "wm_shell_bubbles_aidl",
     ],
     plugins: ["androidx.room_room-compiler-plugin"],
     required: ["privapp_allowlist_com.libremobileos.sidebar"],
