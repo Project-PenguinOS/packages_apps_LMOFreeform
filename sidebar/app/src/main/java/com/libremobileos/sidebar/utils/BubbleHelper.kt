@@ -23,7 +23,7 @@ import android.os.IBinder
 import android.os.Process
 import android.util.Log
 import com.android.wm.shell.bubbles.IBubbles
-import com.android.wm.shell.shared.bubbles.BubbleAnythingFlagHelper
+import com.android.wm.shell.shared.bubbles.BubbleFlagHelper
 import com.android.wm.shell.shared.bubbles.logging.EntryPoint
 
 object BubbleHelper {
@@ -34,7 +34,7 @@ object BubbleHelper {
 
     @Volatile private var sBubbles: IBubbles? = null
 
-    fun isSupported(): Boolean = BubbleAnythingFlagHelper.enableCreateAnyBubble()
+    fun isSupported(): Boolean = BubbleFlagHelper.enableCreateAnyBubble()
 
     fun bind(context: Context) {
         if (!isSupported()) return
