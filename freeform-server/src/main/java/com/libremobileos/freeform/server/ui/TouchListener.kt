@@ -85,6 +85,9 @@ class RightViewClickListener(private val displayId: Int) : View.OnClickListener 
     }
 }
 
+/** The smallest a freeform window can be resized to, as WM does for resizeable tasks. */
+private const val MIN_FREEFORM_SIZE_DP = 220
+
 class ScaleTouchListener(private val window: FreeformWindow, private val isRight: Boolean = true): View.OnTouchListener {
     private var startX = 0.0f
     private var startY = 0.0f
@@ -102,11 +105,12 @@ class ScaleTouchListener(private val window: FreeformWindow, private val isRight
                 veilView.visibility = View.VISIBLE
             }
             MotionEvent.ACTION_MOVE -> {
+                val minSize = (MIN_FREEFORM_SIZE_DP * v.resources.displayMetrics.density).roundToInt()
                 rootView.layoutParams = rootView.layoutParams.apply {
                     val xDelta = if (isRight) (event.rawX - startX) else (startX - event.rawX)
                     val yDelta = event.rawY - startY
-                    width = max(25, (rootView.width + xDelta).roundToInt())
-                    height = max(25, (rootView.height + yDelta).roundToInt())
+                    width = max(minSize, (rootView.width + xDelta).roundToInt())
+                    height = max(minSize, (rootView.height + yDelta).roundToInt())
                     if (width > height) {
                         if (xDelta < 0) width = height
                         else height = width
